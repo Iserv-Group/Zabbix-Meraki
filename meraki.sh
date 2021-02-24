@@ -6,11 +6,11 @@
 docker_folder="/usr/lib/zabbix/externalscripts/" 
 output_folder"/usr/lib/zabbix/externalscripts/"
 
-#json variables for the json_convert script. Do not change. 
+#json variables for the json_convert function. Do not change. 
 json_head="{\"data\":["
 json_tail="]}"
 json=$json_head
-
+#jq script function to convert variables to json output for Zabbix discovery
 json_convert () {
 	json+=$(jq -Rn '
 	( input  | split("|") ) as $keys |
@@ -19,7 +19,7 @@ json_convert () {
 	' <<<"$s")
 	json+=","
 }
-
+#This section is setup as a cronjob because the script could take longer than the max 30 second Zabbix timeout on larger lists of organizations. 
 if [ "$1" == "cron.network.discovery" ]; then
 	IFS=$'\n' net_id=(`cat $docker_folder"meraki.json" | jq '.[] | .networkId' | sort | uniq | sed 's/\"//g'`)
 	for i in "${net_id[@]}"; do
@@ -58,7 +58,7 @@ if [ "$1" == "device.discovery" ]; then
 	echo $json
 fi
 
-#Discover any WAN uplinks on a network. Creates monitors for each uplink. Takes Network ID as a variable
+#Discover any WAN uplinks on a network. Creates monitors for each uplink. It will discovery uplinks on secondary firewalls as well if they are present. Takes Network ID as a variable
 if [ "$1" == "wan.discovery" ]; then
 	#Create list of WAN Devices on a network
 	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).serial' | sed 's/\"//g'`)
@@ -92,6 +92,7 @@ fi
 if [ "$1" == "device.status" ]; then
 	$output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.serial == $id ).status' | sed 's/\"online\"/2/g' | sed 's/\"alerting\"/1/g' | sed 's/\"offline\"/0/g' 
 fi
+#Test WAN status. Takes serial number as argument
 if [ "$1" == "wan.status" ]; then
 	$output_folder"meraki.json" | jq --arg serial "$2" --arg int_name "$3" '.[] | select(.serial == $serial ) | .uplinks | .[] | select(.interface == $int_name ).status' | sed 's/\"active\"/3/g' | sed 's/\"ready\"/2/g' | sed 's/\"failed\"/1/g' | sed 's/\"not connected\"/1/g'
 fi
