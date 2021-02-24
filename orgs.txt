@@ -1,2 +1,1 @@
-ISERV
-POAH Communities
+Example Org
