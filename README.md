@@ -18,10 +18,10 @@
  6. Modify the folder variables at the top of the meraki_status.sh script to match your installation 
  7.	Run the meraki_status.sh script to see if a valid json file is created at externalscripts/meraki.json
  8.	Assuming the test was successful, add the following two lines to a superuser crontab that has privileges to read/execute both scripts. Make sure to use the full path to both scripts, instead of the examples below. 
- ``` 
- * * * * * /home/user/scripts/meraki_status.sh
- */10 * * * * /usr/lib/zabbix/externalscripts/meraki.sh cron.network.discovery
- ```
+
+ ```  * * * * * /home/user/scripts/meraki_status.sh
+ */10 * * * * /usr/lib/zabbix/externalscripts/meraki.sh cron.network.discovery  ```
+
  9. Import the template into Zabbix
  10. Create a Host Group with the name of Meraki and give permissions to your users that include subgroups. 
  11. Apply the Meraki Network Discovery template to your Zabbix host, then run the discovery rule. 
