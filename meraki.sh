@@ -3,10 +3,10 @@
 #Location of the externalscripts folder
 #If Zabbix is installed normally, both folder paths should be the same. If installed using docker, $docker_folder 
 #should be the location as seen on the host, while output_folder should be the location as seen within the container.
-docker_folder="/usr/lib/zabbix/externalscripts/" 
-output_folder"/usr/lib/zabbix/externalscripts/"
+docker_folder=$(echo "/usr/lib/zabbix/externalscripts/") 
+output_folder=$(echo "/usr/lib/zabbix/externalscripts/")
 
-#json variables for the json_convert function. Do not change. 
+#json variables for the json_convert function. Do not change.
 json_head="{\"data\":["
 json_tail="]}"
 json=$json_head
@@ -43,7 +43,7 @@ fi
 
 #Discovers devices on a network. Takes Network ID as a variable
 if [ "$1" == "device.discovery" ]; then
-	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id) | select(.network_name | index("pending") | not ) | select(.network_name | index("PENDING") | not) | select(.network_name | index("pending") | not )' | sed 's/\"//g'`)
+	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).serial' | sed 's/\"//g'`)
 	for i in "${serial[@]}"; do
 		name=$(cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial ).name' | sed 's/\"//g')
 		notes=$(cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g')
@@ -61,9 +61,9 @@ fi
 #Discover any WAN uplinks on a network. Creates monitors for each uplink. It will discovery uplinks on secondary firewalls as well if they are present. Takes Network ID as a variable
 if [ "$1" == "wan.discovery" ]; then
 	#Create list of WAN Devices on a network
-	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).serial' | sed 's/\"//g'`)
-	IFS=$'\n' name=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).name' | sed 's/\"//g'`)
-	IFS=$'\n' notes=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g'`)
+	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).serial' | sed 's/\"//g'`)
+	IFS=$'\n' name=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).name' | sed 's/\"//g'`)
+	IFS=$'\n' notes=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g'`)
 	c1=0
 	for i in "${serial[@]}"; do
 		IFS=$'\n' int_name=(`cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial) | .uplinks | .[] | select(.status != "not connected").interface' | sed 's/\"//g'`)
@@ -90,10 +90,13 @@ if [ "$1" == "network.status" ]; then
 fi
 #Test device status. Takes serial number as argument
 if [ "$1" == "device.status" ]; then
-	$output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.serial == $id ).status' | sed 's/\"online\"/2/g' | sed 's/\"alerting\"/1/g' | sed 's/\"offline\"/0/g' 
+	cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.serial == $id ).status' | sed 's/\"online\"/2/g' | sed 's/\"alerting\"/1/g' | sed 's/\"offline\"/0/g' 
 fi
 #Test WAN status. Takes serial number as argument
 if [ "$1" == "wan.status" ]; then
-	$output_folder"meraki.json" | jq --arg serial "$2" --arg int_name "$3" '.[] | select(.serial == $serial ) | .uplinks | .[] | select(.interface == $int_name ).status' | sed 's/\"active\"/3/g' | sed 's/\"ready\"/2/g' | sed 's/\"failed\"/1/g' | sed 's/\"not connected\"/1/g'
+	cat $output_folder"meraki.json" | jq --arg serial "$2" --arg int_name "$3" '.[] | select(.serial == $serial ) | .uplinks | .[] | select(.interface == $int_name ).status' | sed 's/\"active\"/3/g' | sed 's/\"ready\"/2/g' | sed 's/\"failed\"/1/g' | sed 's/\"not connected\"/1/g'
 fi
-
+#Pulls full json list for every device on the network
+if [ "$1" == "network.data" ]; then
+	cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s
+fi
