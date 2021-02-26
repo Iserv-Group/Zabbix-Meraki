@@ -21,11 +21,11 @@ json_convert () {
 }
 #This section is setup as a cronjob because the script could take longer than the max 30 second Zabbix timeout on larger lists of organizations. 
 if [ "$1" == "cron.network.discovery" ]; then
-	IFS=$'\n' net_id=(`cat $docker_folder"meraki.json" | jq '.[] | .networkId' | sort | uniq | sed 's/\"//g'`)
+	IFS=$'\n' net_id=(`cat $docker_folder"meraki.json" | jq '.[] | select(.network_name | test("(?i)ignore") | not ) | select(.network_name | test("(?i)pending") | not ).networkId' | sort | uniq | sed 's/\"//g'`)
 	for i in "${net_id[@]}"; do
 		org_name=$(cat $docker_folder"meraki.json" | jq --arg id "$i" '.[] | select(.networkId == $id ).org_name' | sort | uniq | sed 's/\"//g' | sed 's/\,//g' | sed 's/\.//g' | sed 's/\&/and/g' | tr -d '()' | tr -d \'\")
 		network_name=$(cat $docker_folder"meraki.json" | jq --arg id "$i" '.[] | select(.networkId == $id ).network_name' | sort | uniq | sed 's/\"//g')
-		notes=$(cat $docker_folder"meraki.json" | jq --arg id "$i" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).notes' | head -1 | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g')
+		notes=$(cat $docker_folder"meraki.json" | jq --arg id "$i" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0).notes' | head -1 | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g' | sed 's/|/<br>/g')
 		s1=$(echo '{#NETWORK_NAME}|{#ORG}|{#NETWORK_ID}|{#MX_NOTES}')
 		s2=$(echo $network_name"|"$org_name"|"$i"|"$notes)
 		s="${s1}"$'\n'"${s2}"
@@ -46,7 +46,7 @@ if [ "$1" == "device.discovery" ]; then
 	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).serial' | sed 's/\"//g'`)
 	for i in "${serial[@]}"; do
 		name=$(cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial ).name' | sed 's/\"//g')
-		notes=$(cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g')
+		notes=$(cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g' | sed 's/|/<br>/g')
 		s1=$(echo '{#NAME}|{#SERIAL}|{#NOTES}')
 		s2=$(echo $name"|"$i"|"$notes)
 		s="${s1}"$'\n'"${s2}"
