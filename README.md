@@ -1,9 +1,8 @@
 # Overview
- The purpose of this script is to monitor the up status of Meraki devices in Zabbix. This is accomplished by making API calls against the Meraki Dashboard and the external scripts function in Zabbix. Because this script uses external checks exclusively, everything is checked on the Zabbix server. This can be rather resource intensive on the Zabbix server so make sure to monitor resource usage closely
-## Script Details
+ The purpose of this script is to monitor the up status of Meraki devices in Zabbix. This is accomplished by making API calls against the Meraki Dashboard using the external scripts function in Zabbix. Because this script uses external checks exclusively, everything is checked on the Zabbix server.
  To allow for separation of the Meraki API key from Zabbix, there are two scripts, the meraki_status.sh script pulls data from the API and outputs it to a json file for the meraki.sh that is used by Zabbix for discovery and status purposes.
 ## Templated Zabbix items and triggers
- The template is configured to create low priority alerts after a few minutes if a device or entire network becomes unreachable, then create increasingly higher priority alerts if the devices remain offline. The discovery process creates a single host within Zabbix for each Meraki network and adds it to a group based off its organization name in Meraki. 
+ The Zabbix template is configured to create low priority alerts after a few minutes if a device or entire network becomes unreachable, then create increasingly higher priority alerts if the devices remain offline. The discovery process creates a single host within Zabbix for each Meraki network and adds it to a group based off its organization name in Meraki. 
  Alerts for discovered devices are dependent on an alert for the entire site. This is to reduce alerting to a single alarm if all the devices at a site go offline at the same time. 
 # Installation
  1.	Start by downloading the repository and moving both scripts and the orgs.txt file to your Zabbix installation.
