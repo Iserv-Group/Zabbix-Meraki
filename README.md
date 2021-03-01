@@ -8,11 +8,11 @@
  1.	Start by downloading the repository and moving both scripts and the orgs.txt file to your Zabbix installation.
  2.	Place the meraki_status.sh script in a secure location on the Zabbix server and limit the read/write privileges on the script to super users to protect your API key. 
  3. Add a list of Meraki Organizations that you want to monitor to the orgs.txt file. 
-	i.The organization names need to be exactly the same as they are found in Meraki
+	1.The organization names need to be exactly the same as they are found in Meraki
  4.	Modify the variables at the top of the meraki_status.sh script
-	i. replace orgs.txt with the full path to the org.txt file
-	ii.	Add your Meraki API key
-	iii. Change the output folder to the location of the externalscripts folder of your Zabbix installation 
+	1. replace orgs.txt with the full path to the org.txt file
+	2.	Add your Meraki API key
+	3. Change the output folder to the location of the externalscripts folder of your Zabbix installation 
  5. Place the meraki.sh script in the externalscripts folder.
  6. Modify the folder variables at the top of the meraki_status.sh script to match your installation 
  7.	Run the meraki_status.sh script to see if a valid json file is created at externalscripts/meraki.json
