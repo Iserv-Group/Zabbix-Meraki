@@ -1,3 +1,5 @@
+#!/bin/bash
+
 #NOTES:
 #This Meraki API data pull script was created specifically to generate a data file containing device VPN tunnel statistics that Zabbix can poll periodically.  
 #The complete script takes roughly 180 seconds to complete for me.
