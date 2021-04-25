@@ -1,6 +1,6 @@
 zabbix_export:
   version: '5.2'
-  date: '2021-02-25T18:25:51Z'
+  date: '2021-04-25T17:59:27Z'
   groups:
     -
       name: Meraki_Autodiscover
@@ -30,17 +30,41 @@ zabbix_export:
           name: '{HOSTNAME} data pull'
           type: EXTERNAL
           key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+          delay: 5m
           history: 7d
           trends: '0'
+          status: DISABLED
           value_type: TEXT
           applications:
             -
               name: Network
         -
+          name: '{HOSTNAME} data pull - uplink'
+          type: EXTERNAL
+          key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+          delay: 5m
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: WAN
+        -
+          name: '{HOSTNAME} data pull - vpn statistics'
+          type: EXTERNAL
+          key: 'meraki.sh[network.uplink.vpnstats.data,{$NETWORK_ID}]'
+          delay: 15m
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: WAN
+        -
           name: '{HOSTNAME} Status Check'
           type: DEPENDENT
           key: 'network.status[{$NETWORK_ID}]'
           delay: '0'
+          status: DISABLED
           applications:
             -
               name: Network
@@ -111,6 +135,51 @@ zabbix_export:
                 All devices on this Meraki Network have been unreachable from the Meraki dashboard in 15 min.
                 <b>Notes from Meraki Dashboard</b>
                 {$MX_NOTES}
+        -
+          name: '{HOSTNAME} Uplink Status Check'
+          type: DEPENDENT
+          key: 'network.uplink.status[{$NETWORK_ID}]'
+          delay: '0'
+          applications:
+            -
+              name: Network
+          valuemap:
+            name: 'Meraki Device Status'
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - '$.*.status'
+            -
+              type: STR_REPLACE
+              parameters:
+                - '"online"'
+                - '2'
+            -
+              type: STR_REPLACE
+              parameters:
+                - '"alerting"'
+                - '1'
+            -
+              type: STR_REPLACE
+              parameters:
+                - '"offline"'
+                - '0'
+            -
+              type: TRIM
+              parameters:
+                - '[]'
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var myArray = value.split(",").map(Number);
+                  var max = myArray.reduce(function(a, b) {
+                      return Math.max(a, b);
+                  });
+                  return max
+          master_item:
+            key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
       discovery_rules:
         -
           name: 'Discover Meraki Devices'
@@ -151,7 +220,7 @@ zabbix_export:
                     - '["offline"]'
                     - '0'
               master_item:
-                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
               trigger_prototypes:
                 -
                   expression: '{max(6m)}=0'
@@ -228,12 +297,144 @@ zabbix_export:
           lifetime: 7d
           item_prototypes:
             -
-              name: '{#INT_NAME} on {#NAME} Status Check'
+              name: '{#NAME} {#INT_NAME} Interface Signal Type (3G-4G)'
               type: DEPENDENT
-              key: 'wan.status[{#SERIAL},{#INT_NAME}]'
+              key: 'wan.uplink.status[{#SERIAL},connectionType]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].connectionType'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: '{#NAME} {#INT_NAME} Interface Latency'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},Latency]'
+              delay: '0'
+              value_type: FLOAT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.serial == ''{#SERIAL}'')].timeSeries'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $..latencyMs
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: '{#NAME} {#INT_NAME} Interface Packet Loss'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},PacketLoss]'
+              delay: '0'
+              value_type: FLOAT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.serial == ''{#SERIAL}'')].timeSeries'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $..lossPercent
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: '{#NAME} {#INT_NAME} Interface Signal Strength (RSRP)'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},rsrp]'
+              delay: '0'
+              value_type: FLOAT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].signalStat.rsrp'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: '{#NAME} {#INT_NAME} Interface Signal Strength (RSRQ)'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},rsrq]'
+              delay: '0'
+              value_type: FLOAT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].signalStat.rsrq'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: '{#NAME} {#INT_NAME} Interface Status Check'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL}, Uplink StatusCheck]'
               delay: '0'
               history: 30d
-              trends: 180d
               applications:
                 -
                   name: WAN
@@ -271,62 +472,84 @@ zabbix_export:
                     - '["not connected"]'
                     - '0'
               master_item:
-                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
               trigger_prototypes:
                 -
                   expression: '{max(15m)}=1'
-                  name: '{#INT_NAME} on {#NAME} down for 15 min'
+                  name: '{#INT_NAME} Uplink on {#NAME} down for 15 min'
                   priority: INFO
                   description: |
                     The {#INT_NAME} connection at this location has been down for over 15 min.
                     <b>Notes from Meraki Dashboard</b>
                     {#NOTES}
-                  dependencies:
-                    -
-                      name: 'Network Unreachable for 5 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(4m)}=0'
-                    -
-                      name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
-                    -
-                      name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
-                    -
-                      name: '{#INT_NAME} on {#NAME} down for 30 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(30m)}=1'
-                    -
-                      name: '{#INT_NAME} on {#NAME} down for 60 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(60m)}=1'
+          graph_prototypes:
+            -
+              name: '{#INT_NAME} on {#NAME} Latency'
+              ymin_type_1: FIXED
+              ymax_type_1: FIXED
+              graph_items:
                 -
-                  expression: '{max(30m)}=1'
-                  name: '{#INT_NAME} on {#NAME} down for 30 min'
-                  priority: WARNING
-                  description: |
-                    The {#INT_NAME} connection at this location has been down for over 30 min.
-                    <b>Notes from Meraki Dashboard</b>
-                    {#NOTES}
-                  dependencies:
-                    -
-                      name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
-                    -
-                      name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
-                    -
-                      name: '{#INT_NAME} on {#NAME} down for 60 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(60m)}=1'
+                  sortorder: '1'
+                  drawtype: FILLED_REGION
+                  color: FF0080
+                  calc_fnc: ALL
+                  item:
+                    host: 'Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},Latency]'
+            -
+              name: '{#INT_NAME} on {#NAME} Packet Loss'
+              ymin_type_1: FIXED
+              ymax_type_1: FIXED
+              graph_items:
                 -
-                  expression: '{max(60m)}=1'
-                  name: '{#INT_NAME} on {#NAME} down for 60 min'
-                  priority: AVERAGE
-                  description: |
-                    The {#INT_NAME} connection at this location has been down for over 60 min.
-                    <b>Notes from Meraki Dashboard</b>
-                    {#NOTES}
-                  dependencies:
-                    -
-                      name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                  sortorder: '1'
+                  drawtype: FILLED_REGION
+                  color: FF0000
+                  calc_fnc: ALL
+                  item:
+                    host: 'Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},PacketLoss]'
+            -
+              name: '{#INT_NAME} on {#NAME} Signal Strength (RSRP)'
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: FILLED_REGION
+                  color: F63100
+                  item:
+                    host: 'Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},rsrp]'
+            -
+              name: '{#INT_NAME} on {#NAME} Signal Strength (RSRQ)'
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: FILLED_REGION
+                  color: 1A7C11
+                  item:
+                    host: 'Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},rsrq]'
+            -
+              name: '{#INT_NAME} on {#NAME} Uplink Status Check Graph'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: F63100
+                  calc_fnc: ALL
+                  item:
+                    host: 'Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL}, Uplink StatusCheck]'
+          lld_macro_paths:
+            -
+              lld_macro: '{#MAC}'
+              path: $.mac
+      macros:
+        -
+          macro: '{$MX_NOTES}'
+          value: '{#MX_NOTES}'
+        -
+          macro: '{$NETWORK_ID}'
+          value: '{#NETWORK_ID}'
     -
       template: 'Meraki Network Discovery'
       name: 'Meraki Network Discovery'
@@ -345,8 +568,8 @@ zabbix_export:
           lifetime: 7d
           host_prototypes:
             -
-              host: 'Meraki {#ORG} {#NETWORK_NAME}'
-              name: 'Meraki {#ORG} {#NETWORK_NAME}'
+              host: 'Meraki {#NETWORK_NAME}'
+              name: 'Meraki {#NETWORK_NAME}'
               group_links:
                 -
                   group:
