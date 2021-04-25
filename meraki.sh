@@ -58,16 +58,18 @@ if [ "$1" == "device.discovery" ]; then
 	echo $json
 fi
 
+
+#Start of quickpoll additions
 #Discover any WAN uplinks on a network. Creates monitors for each uplink. It will discovery uplinks on secondary firewalls as well if they are present. Takes Network ID as a variable
 if [ "$1" == "wan.discovery" ]; then
 	#Create list of WAN Devices on a network
-	IFS=$'\n' serial=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).serial' | sed 's/\"//g'`)
-	IFS=$'\n' name=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).name' | sed 's/\"//g'`)
-	IFS=$'\n' notes=(`cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g'`)
+	IFS=$'\n' serial=(`cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).serial' | sed 's/\"//g'`)
+	IFS=$'\n' name=(`cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).name' | sed 's/\"//g'`)
+	IFS=$'\n' notes=(`cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id ) | select(.uplinks | length > 0) | select(.name | test("(?i)ignore") | not ) | select(.name | test("(?i)pending") | not ).notes' | sed 's/\"//g' | sed 's/\\r\\n/<br>/g' | sed 's/\\n/<br>/g'`)
 	c1=0
 	for i in "${serial[@]}"; do
-		IFS=$'\n' int_name=(`cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial) | .uplinks | .[] | select(.status != "not connected").interface' | sed 's/\"//g'`)
-		IFS=$'\n' int_ip=(`cat $output_folder"meraki.json" | jq --arg serial "$i" '.[] | select(.serial == $serial) | .uplinks | .[] | select(.status != "not connected").publicIp' | sed 's/\"//g'`)
+		IFS=$'\n' int_name=(`cat $output_folder"meraki_quickpoll.json" | jq --arg serial "$i" '.[] | select(.serial == $serial) | .uplinks | .[] | select(.status != "not connected").interface' | sed 's/\"//g'`)
+		IFS=$'\n' int_ip=(`cat $output_folder"meraki_quickpoll.json" | jq --arg serial "$i" '.[] | select(.serial == $serial) | .uplinks | .[] | select(.status != "not connected").publicIp' | sed 's/\"//g'`)
 		c2=0
 		for i in "${int_ip[@]}"; do
 			s1=$(echo '{#NAME}|{#INT_IP}|{#INT_NAME}|{#NOTES}|{#NET_NAME}|{#SERIAL}')
@@ -99,4 +101,25 @@ fi
 #Pulls full json list for every device on the network
 if [ "$1" == "network.data" ]; then
 	cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s
+fi
+
+
+#QUICKPOLL CHECK - Pulls full json list for every device info on the network
+if [ "$1" == "network.uplink.data" ]; then
+        cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s .
+fi
+
+#QUICKPOLL CHECK - Test's the status of a Meraki network as a whole. Takes Network ID as a variable
+if [ "$1" == "network.uplink.status" ]; then
+        cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id ).status' | sed 's/\"online\"/2/g' | sed 's/\"alerting\"/1/g' | sed 's/\"offline\"/0/g' | sort -r | head -1
+fi
+
+#QUICKPOLL CHECK - Test WAN status. Takes serial number as argument
+if [ "$1" == "wan.uplink.status" ]; then
+        cat $output_folder"meraki_quickpoll.json" | jq --arg serial "$2" --arg int_name "$3" '.[] | select(.serial == $serial ) | .uplinks | .[] | select(.interface == $int_name ).status' | sed 's/\"active\"/3/g' | sed 's/\"ready\"/2/g' | sed 's/\"failed\"/1/g' | sed 's/\"not connected\"/1/g'
+fi
+
+#VPN STATS CHECK - Pulls the vpn statistics of every device on the network. Takes networkId as argument
+if [ "$1" == "network.uplink.vpnstats.data" ]; then
+        cat $output_folder"meraki_status.uplink.vpn_stats.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s .
 fi
