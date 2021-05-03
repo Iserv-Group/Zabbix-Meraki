@@ -2,7 +2,7 @@
 
 #NOTES:
 #This Meraki API data pull script was created specifically to generate a data file containing device VPN tunnel statistics that Zabbix can poll periodically.  
-#The complete script takes roughly 180 seconds to complete for me.
+#The complete script takes roughly 48 seconds to complete for me per 1000 devices.
 #Comments have been added to follow the script progress easier.
 #Added ".uplinks." to the filenames to differenciate these as my additions from the original script on Github
 
