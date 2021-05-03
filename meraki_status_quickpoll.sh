@@ -2,7 +2,7 @@
 
 #NOTES:
 #This Meraki cloud API data pull script was created to generate an API aggregate data file that Zabbix can poll periodically.  
-#The complete script takes approximately 75 seconds to complete for me.
+#The complete script takes approximatetly 20 seconds to complete for me per 1000 devices.
 #Files are created for every API call for easy reference and verification.  Comments have been added to make following the script progress easier.
 #The data merge of all the API call data is done by merging the files themselves instead of variables in memory.  This should be easier on the server resources.
 #Added ".uplinks." to the filenames to differenciate these as my additions from the original script on Github
