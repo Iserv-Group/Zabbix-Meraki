@@ -25,4 +25,4 @@ for i in "${orgs[@]}"; do
 	done
 done
 #Output finished json list
-echo $dev | jq > $output_folder"meraki.json"
+echo $dev | jq . > $output_folder"meraki.json"
