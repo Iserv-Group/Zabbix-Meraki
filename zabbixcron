@@ -1,0 +1,7 @@
+*/5 * * * * root /usr/share/zabbix/externalscripts/meraki_status_quickpoll.sh
+2 */6 * * * root /usr/share/zabbix/externalscripts/meraki_status_discovery.sh
+
+
+#These are the suggested cron scheduling entries for the proposed Zabbix Meraki scripts.
+#The meraki_status_quickpoll.sh entry is set to run every five minutes.
+#The meraki_status_discovery.sh entry is set to run every six hours (two minutes after the hour).  This will guarantee the Meraki template will have up to date data to perform the network discovery and host creation every 12 hours.
