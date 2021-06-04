@@ -1,0 +1,645 @@
+zabbix_export:
+  version: '5.2'
+  date: '2021-06-04T14:34:44Z'
+  groups:
+    -
+      name: Meraki_Autodiscover
+    -
+      name: Templates/Applications
+    -
+      name: 'Templates/Network devices'
+  templates:
+    -
+      template: 'AL Meraki Device Discovery'
+      name: 'AL Meraki Device Discovery'
+      description: 'Template used to create Zabbix items and triggers for all devices on a given Meraki Network. Data Pulled automatically from Dashboard API export.'
+      groups:
+        -
+          name: Templates/Applications
+        -
+          name: 'Templates/Network devices'
+      applications:
+        -
+          name: Device
+        -
+          name: Network
+        -
+          name: WAN
+      items:
+        -
+          name: 'data pull - device discovery'
+          type: EXTERNAL
+          key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+          delay: 2h
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: Device
+        -
+          name: 'data pull - uplink quickpoll'
+          type: EXTERNAL
+          key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+          delay: 5m
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          applications:
+            -
+              name: WAN
+      discovery_rules:
+        -
+          name: 'Discover Meraki Devices'
+          type: EXTERNAL
+          key: 'meraki.sh[device.discovery, {$NETWORK_ID}]'
+          delay: 2h
+          lifetime: 1h
+          item_prototypes:
+            -
+              name: 'Device Address'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},ADDRESS]'
+              delay: '0'
+              history: 2w
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Device
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].address'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Device MAC'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},MAC]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Device
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].mac'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Network ID'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},NETWORKID]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Network
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].networkId'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Device Notes'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},NOTES]'
+              delay: '0'
+              history: 2w
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Device
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].notes'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Device Serial Number'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},SERIAL]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Device
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].serial'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Device Tags'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL},TAGS]'
+              delay: '0'
+              history: 2w
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: Device
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].tags'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+            -
+              name: 'Device Status Check'
+              type: DEPENDENT
+              key: 'device.status[{#SERIAL}]'
+              delay: '0'
+              applications:
+                -
+                  name: Device
+              valuemap:
+                name: 'Meraki Device Status'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].status'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["online"]'
+                    - '2'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["alerting"]'
+                    - '1'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["offline"]'
+                    - '0'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+              trigger_prototypes:
+                -
+                  expression: '{max(6m)}=0'
+                  name: '{#NAME} Unreachable for 5 Minute'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: INFO
+                  description: |
+                    The following device has been unreachable from the Meraki cloud for 5 min
+                    <b>Meraki Org and Network Name:</b>  <i>{HOST.NAME}</i>
+                    <b>Meraki Device Name:</b>  <i>{#NAME}</i>
+                  dependencies:
+                    -
+                      name: '{#NAME} Unreachable for 10 Minute'
+                      expression: '{AL Meraki Device Discovery:device.status[{#SERIAL}].max(11m)}=0'
+                    -
+                      name: '{#NAME} Unreachable for 15 Minute'
+                      expression: '{AL Meraki Device Discovery:device.status[{#SERIAL}].max(16m)}=0'
+                -
+                  expression: '{max(11m)}=0'
+                  name: '{#NAME} Unreachable for 10 Minute'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: WARNING
+                  description: |
+                    The following device has been unreachable from the Meraki cloud for 10 min
+                    <b>Meraki Org and Network Name:</b>  <i>{HOST.NAME}</i>
+                    <b>Meraki Device Name:</b>  <i>{#NAME}</i>
+                  dependencies:
+                    -
+                      name: '{#NAME} Unreachable for 15 Minute'
+                      expression: '{AL Meraki Device Discovery:device.status[{#SERIAL}].max(16m)}=0'
+                -
+                  expression: '{max(16m)}=0'
+                  name: '{#NAME} Unreachable for 15 Minute'
+                  status: DISABLED
+                  discover: NO_DISCOVER
+                  priority: AVERAGE
+                  description: |
+                    The following device has been unreachable from the Meraki cloud for 15 min
+                    <b>Meraki Org and Network Name:</b>  <i>{HOST.NAME}</i>
+                    <b>Meraki Device Name:</b>  <i>{#NAME}</i>
+          graph_prototypes:
+            -
+              name: '{#NAME} Device Status Check'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: 1A7C11
+                  calc_fnc: ALL
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'device.status[{#SERIAL}]'
+        -
+          name: 'Discovered WAN Connections'
+          type: EXTERNAL
+          key: 'meraki.sh[wan.discovery,{$NETWORK_ID}]'
+          delay: 1h
+          lifetime: 7d
+          item_prototypes:
+            -
+              name: 'Interface Signal Type (3G-4G)'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},ConnectionType]'
+              delay: '0'
+              trends: '0'
+              value_type: TEXT
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].connectionType'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+              trigger_prototypes:
+                -
+                  expression: '{last()}="hsdpa, hsupa"'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: '{last()}="lte"'
+                  name: 'Meraki Cellular on 3G'
+            -
+              name: 'Uplink Interface Type'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},InterfaceType]'
+              delay: '0'
+              trends: '0'
+              value_type: CHAR
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplink'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: 'Interface Latency'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},Latency]'
+              delay: '0'
+              value_type: FLOAT
+              units: ms
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.serial == ''{#SERIAL}'')].timeSeries'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $..latencyMs
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: 'Interface Packet Loss'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},PacketLoss]'
+              delay: '0'
+              value_type: FLOAT
+              units: '%'
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.serial == ''{#SERIAL}'')].timeSeries'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $..lossPercent
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+              trigger_prototypes:
+                -
+                  expression: '{last()}>=1'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: '{last()}=0'
+                  name: 'Meraki Uplink Packet Loss'
+                  manual_close: 'YES'
+            -
+              name: 'Interface Signal Strength (RSRP)'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},RSRP]'
+              delay: '0'
+              value_type: FLOAT
+              units: dBm
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].signalStat.rsrp'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+              trigger_prototypes:
+                -
+                  expression: '{last()}<=-106 and {last()}>=-109'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: '{last()}>=-105'
+                  name: 'Meraki Uplink Poor Signal (RSRP)'
+                  dependencies:
+                    -
+                      name: 'Meraki Uplink Very Poor Signal (RSRP)'
+                      expression: '{AL Meraki Device Discovery:wan.uplink.status[{#SERIAL},RSRP].last()}<=-110'
+                      recovery_expression: '{AL Meraki Device Discovery:wan.uplink.status[{#SERIAL},RSRP].last()}>=-109'
+                -
+                  expression: '{last()}<=-110'
+                  recovery_mode: RECOVERY_EXPRESSION
+                  recovery_expression: '{last()}>=-109'
+                  name: 'Meraki Uplink Very Poor Signal (RSRP)'
+                  manual_close: 'YES'
+            -
+              name: 'Interface Signal Strength (RSRQ)'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},RSRQ]'
+              delay: '0'
+              value_type: FLOAT
+              units: dB
+              applications:
+                -
+                  name: WAN
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == "cellular")].signalStat.rsrq'
+                -
+                  type: TRIM
+                  parameters:
+                    - '["]'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+            -
+              name: 'Uplink Interface Status Check'
+              type: DEPENDENT
+              key: 'wan.uplink.status[{#SERIAL},UplinkStatusCheck]'
+              delay: '0'
+              history: 30d
+              applications:
+                -
+                  name: WAN
+              valuemap:
+                name: 'Meraki Interface Status'
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.serial == ''{#SERIAL}'')].uplinks'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.*.*'
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$[?(@.interface == ''{#INT_NAME}'')].status'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["active"]'
+                    - '3'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["ready"]'
+                    - '2'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["failed"]'
+                    - '1'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["not connected"]'
+                    - '0'
+              master_item:
+                key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
+          graph_prototypes:
+            -
+              name: '{#INT_NAME} on {#NAME} Latency'
+              ymin_type_1: FIXED
+              ymax_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: GRADIENT_LINE
+                  color: FF0080
+                  calc_fnc: ALL
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},Latency]'
+            -
+              name: '{#INT_NAME} on {#NAME} Packet Loss'
+              ymin_type_1: FIXED
+              ymax_type_1: FIXED
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: GRADIENT_LINE
+                  color: FF0000
+                  calc_fnc: ALL
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},PacketLoss]'
+            -
+              name: '{#INT_NAME} on {#NAME} Signal Strength (RSRP)'
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: GRADIENT_LINE
+                  color: F63100
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},RSRP]'
+            -
+              name: '{#INT_NAME} on {#NAME} Signal Strength (RSRQ)'
+              graph_items:
+                -
+                  sortorder: '1'
+                  drawtype: GRADIENT_LINE
+                  color: 1A7C11
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},RSRQ]'
+            -
+              name: '{#INT_NAME} on {#NAME} Uplink Status Check Graph'
+              graph_items:
+                -
+                  sortorder: '1'
+                  color: F63100
+                  calc_fnc: ALL
+                  item:
+                    host: 'AL Meraki Device Discovery'
+                    key: 'wan.uplink.status[{#SERIAL},UplinkStatusCheck]'
+      macros:
+        -
+          macro: '{$MX_NOTES}'
+          value: '{#MX_NOTES}'
+        -
+          macro: '{$NETWORK_ID}'
+          value: '{#NETWORK_ID}'
+    -
+      template: 'AL Meraki Network Discovery'
+      name: 'AL Meraki Network Discovery'
+      description: 'Template used to create Meraki Hosts automatically from Dashboard API export.'
+      groups:
+        -
+          name: Templates/Applications
+        -
+          name: 'Templates/Network devices'
+      discovery_rules:
+        -
+          name: 'Meraki Host Creation'
+          type: EXTERNAL
+          key: 'meraki.sh[network.discovery]'
+          delay: 12h
+          lifetime: 7d
+          host_prototypes:
+            -
+              host: 'Meraki {#NETWORK_NAME}'
+              name: 'Meraki {#NETWORK_NAME}'
+              group_links:
+                -
+                  group:
+                    name: Meraki_Autodiscover
+              group_prototypes:
+                -
+                  name: 'Meraki/{#ORG}'
+              templates:
+                -
+                  name: 'AL Meraki Device Discovery'
+              macros:
+                -
+                  macro: '{$MX_NOTES}'
+                  value: '{#MX_NOTES}'
+                -
+                  macro: '{$NETWORK_ID}'
+                  value: '{#NETWORK_ID}'
+              custom_interfaces: 'YES'
+              interfaces:
+                - {  }
+  value_maps:
+    -
+      name: 'Meraki Device Status'
+      mappings:
+        -
+          value: '0'
+          newvalue: Offline
+        -
+          value: '1'
+          newvalue: Alerting
+        -
+          value: '2'
+          newvalue: Online
+    -
+      name: 'Meraki Interface Status'
+      mappings:
+        -
+          value: '0'
+          newvalue: 'Not Connected'
+        -
+          value: '1'
+          newvalue: Failed
+        -
+          value: '2'
+          newvalue: Ready
+        -
+          value: '3'
+          newvalue: Active
