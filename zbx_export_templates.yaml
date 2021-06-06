@@ -1,6 +1,6 @@
 zabbix_export:
   version: '5.2'
-  date: '2021-06-04T14:34:44Z'
+  date: '2021-06-05T23:57:01Z'
   groups:
     -
       name: Meraki_Autodiscover
@@ -421,7 +421,7 @@ zabbix_export:
                 key: 'meraki.sh[network.uplink.data,{$NETWORK_ID}]'
               trigger_prototypes:
                 -
-                  expression: '{last()}<=-106 and {last()}>=-109'
+                  expression: '{last()}<=-106'
                   recovery_mode: RECOVERY_EXPRESSION
                   recovery_expression: '{last()}>=-105'
                   name: 'Meraki Uplink Poor Signal (RSRP)'
@@ -429,13 +429,9 @@ zabbix_export:
                     -
                       name: 'Meraki Uplink Very Poor Signal (RSRP)'
                       expression: '{AL Meraki Device Discovery:wan.uplink.status[{#SERIAL},RSRP].last()}<=-110'
-                      recovery_expression: '{AL Meraki Device Discovery:wan.uplink.status[{#SERIAL},RSRP].last()}>=-109'
                 -
                   expression: '{last()}<=-110'
-                  recovery_mode: RECOVERY_EXPRESSION
-                  recovery_expression: '{last()}>=-109'
                   name: 'Meraki Uplink Very Poor Signal (RSRP)'
-                  manual_close: 'YES'
             -
               name: 'Interface Signal Strength (RSRQ)'
               type: DEPENDENT
