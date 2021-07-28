@@ -25,5 +25,5 @@
 
  9. Import the template into Zabbix
  10. Create a Host Group with the name of Meraki and give permissions to your users that include subgroups. 
- 11. Apply the Meraki Network Discovery template to your Zabbix host, then run the discovery rule. 
+ 11. Apply the Meraki Network Discovery template to your Zabbix Server host, then run the discovery rule. 
 
