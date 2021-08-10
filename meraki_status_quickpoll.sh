@@ -51,7 +51,7 @@ for org_txt in "${orgs[@]}"; do
 	#Retrieve organization device loss and latency 
 	echo "---------- losslatency quickpoll API lookup"
 	sleep 2
-	loss_latency=$(curl -s -L --request GET --url https://api.meraki.com/api/v0/organizations/664280945037149854/uplinksLossAndLatency?timespan=60 --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Cisco-Meraki-API-Key: $api_key")
+	loss_latency=$(curl -s -L --request GET --url https://api.meraki.com/api/v0/organizations/$org_id/uplinksLossAndLatency?timespan=60 --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Cisco-Meraki-API-Key: $api_key")
 	echo ${loss_latency[*]} > $output_folder"meraki_status.quickpoll.loss_latency.json"
 
 	#Places all of the values for a single network into a single string variable.
