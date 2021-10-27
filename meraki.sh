@@ -100,3 +100,7 @@ fi
 if [ "$1" == "network.data" ]; then
 	cat $output_folder"meraki.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s
 fi
+#Pulls list of errors from errors list
+if [ "$1" == "errors.list" ]; then
+	cat $output_folder"meraki_errors.json"
+fi

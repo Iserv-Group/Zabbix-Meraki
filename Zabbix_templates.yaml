@@ -33,9 +33,10 @@ zabbix_export:
           history: 7d
           trends: '0'
           value_type: TEXT
-          applications:
+          tags:
             -
-              name: Network
+              tag: Application
+              value: Network
         -
           name: '{HOSTNAME} Status Check'
           type: DEPENDENT
@@ -83,28 +84,28 @@ zabbix_export:
             key: 'meraki.sh[network.data,{$NETWORK_ID}]'
           triggers:
             -
-              expression: '{max(4m)}=0'
+              expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],4m)=0'
               name: 'Network Unreachable for 5 Minute'
               priority: INFO
               description: 'All devices on this Meraki Network have been unreachable from the Meraki dashboard in 5 min.'
               dependencies:
                 -
                   name: 'Network Unreachable for 10 Minute'
-                  expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
+                  expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
                 -
                   name: 'Network Unreachable for 15 Minute'
-                  expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                  expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
             -
-              expression: '{max(10m)}=0'
+              expression: expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
               name: 'Network Unreachable for 10 Minute'
               priority: WARNING
               description: 'All devices on this Meraki Network have been unreachable from the Meraki dashboard in 10 min.'
               dependencies:
                 -
                   name: 'Network Unreachable for 15 Minute'
-                  expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                  expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
             -
-              expression: '{max(15m)}=0'
+              expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
               name: 'Network Unreachable for 15 Minute'
               priority: AVERAGE
               description: |
@@ -116,8 +117,8 @@ zabbix_export:
           name: 'Discover Meraki Devices'
           type: EXTERNAL
           key: 'meraki.sh[device.discovery, {$NETWORK_ID}]'
-          delay: 5m
-          lifetime: 1h
+          delay: 1d
+          lifetime: 7d
           item_prototypes:
             -
               name: '{#NAME} Status Check'
@@ -152,9 +153,13 @@ zabbix_export:
                     - '0'
               master_item:
                 key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+              tags:
+                -
+                  tag: Application
+                  value: Device
               trigger_prototypes:
                 -
-                  expression: '{max(6m)}=0'
+                  expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],6m)=0'
                   name: '{#NAME} Unreachable for 5 Minute'
                   priority: INFO
                   description: |
@@ -164,21 +169,21 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 5 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(4m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],4m)=0'
                     -
                       name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
                     -
                       name: '{#NAME} Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:device.status[{#SERIAL}].max(11m)}=0'
+                      expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],11m)=0'
                     -
                       name: '{#NAME} Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:device.status[{#SERIAL}].max(16m)}=0'
+                      expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                 -
-                  expression: '{max(11m)}=0'
+                  expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],11m)=0'
                   name: '{#NAME} Unreachable for 10 Minute'
                   priority: WARNING
                   description: |
@@ -188,15 +193,15 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
                     -
                       name: '{#NAME} Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:device.status[{#SERIAL}].max(16m)}=0'
+                      expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                 -
-                  expression: '{max(16m)}=0'
+                  expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                   name: '{#NAME} Unreachable for 15 Minute'
                   priority: AVERAGE
                   description: |
@@ -206,7 +211,7 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
             -
               name: '{#NAME} Status Check'
               type: EXTERNAL
@@ -223,8 +228,8 @@ zabbix_export:
         -
           name: 'Discovered WAN Connections'
           type: EXTERNAL
-          key: 'meraki.sh[wan.discovery,{$NETWORK_ID}]'
-          delay: 5m
+          key: 'meraki3.sh[wan.discovery,{$NETWORK_ID}]'
+          delay: 1d
           lifetime: 7d
           item_prototypes:
             -
@@ -272,9 +277,13 @@ zabbix_export:
                     - '0'
               master_item:
                 key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+              tags:
+                -
+                  tag: Application
+                  value: WAN
               trigger_prototypes:
                 -
-                  expression: '{max(15m)}=1'
+                  expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],15m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 15 min'
                   priority: INFO
                   description: |
@@ -284,21 +293,21 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 5 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(4m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],4m)=0'
                     -
                       name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
                     -
                       name: '{#INT_NAME} on {#NAME} down for 30 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(30m)}=1'
+                      expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],30m)=1'
                     -
                       name: '{#INT_NAME} on {#NAME} down for 60 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(60m)}=1'
+                      expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                 -
-                  expression: '{max(30m)}=1'
+                  expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],30m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 30 min'
                   priority: WARNING
                   description: |
@@ -308,15 +317,15 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 10 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(10m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
                     -
                       name: '{#INT_NAME} on {#NAME} down for 60 min'
-                      expression: '{Meraki Device Discovery:wan.status[{#SERIAL},{#INT_NAME}].max(60m)}=1'
+                      expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                 -
-                  expression: '{max(60m)}=1'
+                  expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 60 min'
                   priority: AVERAGE
                   description: |
@@ -326,7 +335,21 @@ zabbix_export:
                   dependencies:
                     -
                       name: 'Network Unreachable for 15 Minute'
-                      expression: '{Meraki Device Discovery:network.status[{$NETWORK_ID}].max(15m)}=0'
+                      expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
+      valuemaps:
+        -
+          uuid: 59e05ea9dc7c45d697ec7e5441fd5f7f
+          name: 'Meraki Device Status'
+          mappings:
+            -
+              value: '0'
+              newvalue: Offline
+            -
+              value: '1'
+              newvalue: Alerting
+            -
+              value: '2'
+              newvalue: Online
     -
       template: 'Meraki Network Discovery'
       name: 'Meraki Network Discovery'
@@ -336,6 +359,57 @@ zabbix_export:
           name: Templates/Applications
         -
           name: 'Templates/Network devices'
+      items:
+        -
+          name: 'Meraki Error Data Pull'
+          type: EXTERNAL
+          key: 'meraki.sh[errors.list]'
+          trends: '0'
+          value_type: TEXT
+        -
+          name: 'Meraki error count'
+          type: DEPENDENT
+          key: 'Meraki_error[count]'
+          delay: '0'
+          history: 7d
+          trends: 30d
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.errors_count
+          master_item:
+            key: 'meraki.sh[errors.list]'
+        -
+          name: 'Meraki error list'
+          type: DEPENDENT
+          key: 'Meraki_error[list]'
+          delay: '0'
+          history: 7d
+          trends: '0'
+          value_type: TEXT
+          preprocessing:
+            -
+              type: JSONPATH
+              parameters:
+                - $.errors
+            -
+              type: JSONPATH
+              parameters:
+                - '$.*.*'
+            -
+              type: TRIM
+              parameters:
+                - '[]'
+            -
+              type: JAVASCRIPT
+              parameters:
+                - |
+                  var myArray = value.split(",").join("\r\n");
+                  return myArray
+                  
+          master_item:
+            key: 'meraki.sh[errors.list]'
       discovery_rules:
         -
           name: 'Meraki Host Creation'
@@ -367,16 +441,12 @@ zabbix_export:
               custom_interfaces: 'YES'
               interfaces:
                 - {  }
-  value_maps:
+  triggers:
     -
-      name: 'Meraki Device Status'
-      mappings:
-        -
-          value: '0'
-          newvalue: Offline
-        -
-          value: '1'
-          newvalue: Alerting
-        -
-          value: '2'
-          newvalue: Online
+      expression: 'last(/Meraki Network Discovery/Meraki_error[count])>0 or find(/Meraki Network Discovery/Meraki_error[list],,"like","never match")=1'
+      name: 'Test Meraki Data Pull error.'
+      priority: AVERAGE
+      description: |
+        The following is a list of Meraki Organizations with errors preventing monitoring, followed by the error they are experiencing. If this is alerting, open a ticket for each organization with errors, copy the error into the ticket and escalate so that it gets dealt with during business hours. 
+        
+        {ITEM.VALUE2}
