@@ -1,32 +1,35 @@
 zabbix_export:
-  version: '5.2'
-  date: '2021-02-25T18:25:51Z'
+  version: '5.4'
+  date: '2021-10-27T19:27:54Z'
   groups:
     -
+      uuid: 1566d650da3848abab777d5e05771a0d
       name: Meraki_Autodiscover
     -
+      uuid: 7936c08607e34b5eb4cdcb1e64eeaac3
+      name: Templates/api
+    -
+      uuid: a571c0d144b14fd4a87a9d9b2aa9fcd6
       name: Templates/Applications
     -
+      uuid: 36bff6c29af64692839d077febfc7079
       name: 'Templates/Network devices'
   templates:
     -
+      uuid: 2871aa11e6194a33b866bddecf6a722b
       template: 'Meraki Device Discovery'
       name: 'Meraki Device Discovery'
       description: 'Template used to create Zabbix items and triggers for all devices on a given Meraki Network. Data Pulled automatically from Dashboard API export.'
       groups:
         -
+          name: Templates/api
+        -
           name: Templates/Applications
         -
           name: 'Templates/Network devices'
-      applications:
-        -
-          name: Device
-        -
-          name: Network
-        -
-          name: WAN
       items:
         -
+          uuid: cc8f795379ac4389b60aac9aadb246cd
           name: '{HOSTNAME} data pull'
           type: EXTERNAL
           key: 'meraki.sh[network.data,{$NETWORK_ID}]'
@@ -38,13 +41,11 @@ zabbix_export:
               tag: Application
               value: Network
         -
+          uuid: 9447301c9da748f4bcfd773a5bb799c4
           name: '{HOSTNAME} Status Check'
           type: DEPENDENT
           key: 'network.status[{$NETWORK_ID}]'
           delay: '0'
-          applications:
-            -
-              name: Network
           valuemap:
             name: 'Meraki Device Status'
           preprocessing:
@@ -82,8 +83,13 @@ zabbix_export:
                   return max
           master_item:
             key: 'meraki.sh[network.data,{$NETWORK_ID}]'
+          tags:
+            -
+              tag: Application
+              value: Network
           triggers:
             -
+              uuid: dde26ea4cc1940a393823e104bbb4ae6
               expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],4m)=0'
               name: 'Network Unreachable for 5 Minute'
               priority: INFO
@@ -96,7 +102,8 @@ zabbix_export:
                   name: 'Network Unreachable for 15 Minute'
                   expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
             -
-              expression: expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
+              uuid: 17dadac78d1d4b59b4ad10d6180e1de9
+              expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],10m)=0'
               name: 'Network Unreachable for 10 Minute'
               priority: WARNING
               description: 'All devices on this Meraki Network have been unreachable from the Meraki dashboard in 10 min.'
@@ -105,6 +112,7 @@ zabbix_export:
                   name: 'Network Unreachable for 15 Minute'
                   expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
             -
+              uuid: 541793cc39904fa6ade847eb8d535802
               expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
               name: 'Network Unreachable for 15 Minute'
               priority: AVERAGE
@@ -114,6 +122,7 @@ zabbix_export:
                 {$MX_NOTES}
       discovery_rules:
         -
+          uuid: 61933fb8fd704ac7bbf85ef78c61d3e5
           name: 'Discover Meraki Devices'
           type: EXTERNAL
           key: 'meraki.sh[device.discovery, {$NETWORK_ID}]'
@@ -121,14 +130,12 @@ zabbix_export:
           lifetime: 7d
           item_prototypes:
             -
+              uuid: 100833028dce4ca38a6cc46818f78ca5
               name: '{#NAME} Status Check'
               type: DEPENDENT
               key: 'device.status[{#SERIAL}]'
               delay: '0'
               trends: 180d
-              applications:
-                -
-                  name: Device
               valuemap:
                 name: 'Meraki Device Status'
               preprocessing:
@@ -159,6 +166,7 @@ zabbix_export:
                   value: Device
               trigger_prototypes:
                 -
+                  uuid: 7579aa1ae01647038ff1962641d553d2
                   expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],6m)=0'
                   name: '{#NAME} Unreachable for 5 Minute'
                   priority: INFO
@@ -183,6 +191,7 @@ zabbix_export:
                       name: '{#NAME} Unreachable for 15 Minute'
                       expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                 -
+                  uuid: 9e22482e67284e5f99794ffa9faa5f1f
                   expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],11m)=0'
                   name: '{#NAME} Unreachable for 10 Minute'
                   priority: WARNING
@@ -201,6 +210,7 @@ zabbix_export:
                       name: '{#NAME} Unreachable for 15 Minute'
                       expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                 -
+                  uuid: cc210261c72e4ba9b86efc6732bdf866
                   expression: 'max(/Meraki Device Discovery/device.status[{#SERIAL}],16m)=0'
                   name: '{#NAME} Unreachable for 15 Minute'
                   priority: AVERAGE
@@ -212,36 +222,22 @@ zabbix_export:
                     -
                       name: 'Network Unreachable for 15 Minute'
                       expression: 'max(/Meraki Device Discovery/network.status[{$NETWORK_ID}],15m)=0'
-            -
-              name: '{#NAME} Status Check'
-              type: EXTERNAL
-              key: 'meraki.sh[device.status, {#SERIAL}]'
-              history: 30d
-              trends: 180d
-              status: DISABLED
-              discover: NO_DISCOVER
-              applications:
-                -
-                  name: Device
-              valuemap:
-                name: 'Meraki Device Status'
         -
+          uuid: 658568e2bd0c44009b7ad59cc5fba902
           name: 'Discovered WAN Connections'
           type: EXTERNAL
-          key: 'meraki3.sh[wan.discovery,{$NETWORK_ID}]'
+          key: 'meraki.sh[wan.discovery,{$NETWORK_ID}]'
           delay: 1d
           lifetime: 7d
           item_prototypes:
             -
+              uuid: 6fc2b1a754f846dd96e8b001a8eee341
               name: '{#INT_NAME} on {#NAME} Status Check'
               type: DEPENDENT
               key: 'wan.status[{#SERIAL},{#INT_NAME}]'
               delay: '0'
               history: 30d
               trends: 180d
-              applications:
-                -
-                  name: WAN
               preprocessing:
                 -
                   type: JSONPATH
@@ -283,6 +279,7 @@ zabbix_export:
                   value: WAN
               trigger_prototypes:
                 -
+                  uuid: f93c3791b9a2478dbdb9c58847333486
                   expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],15m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 15 min'
                   priority: INFO
@@ -307,6 +304,7 @@ zabbix_export:
                       name: '{#INT_NAME} on {#NAME} down for 60 min'
                       expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                 -
+                  uuid: 88b2e178c8364115b4565bd3dec72e92
                   expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],30m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 30 min'
                   priority: WARNING
@@ -325,6 +323,7 @@ zabbix_export:
                       name: '{#INT_NAME} on {#NAME} down for 60 min'
                       expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                 -
+                  uuid: d40ede3dd22c4dd1a186e5d0184d8d4b
                   expression: 'max(/Meraki Device Discovery/wan.status[{#SERIAL},{#INT_NAME}],60m)=1'
                   name: '{#INT_NAME} on {#NAME} down for 60 min'
                   priority: AVERAGE
@@ -351,22 +350,27 @@ zabbix_export:
               value: '2'
               newvalue: Online
     -
+      uuid: 2d78a8beb3d741739ca5a53cc0947a83
       template: 'Meraki Network Discovery'
       name: 'Meraki Network Discovery'
       description: 'Template used to create Meraki Hosts automatically from Dashboard API export.'
       groups:
+        -
+          name: Templates/api
         -
           name: Templates/Applications
         -
           name: 'Templates/Network devices'
       items:
         -
+          uuid: 56ddd05640044a05bfc21b21e00539b4
           name: 'Meraki Error Data Pull'
           type: EXTERNAL
           key: 'meraki.sh[errors.list]'
           trends: '0'
           value_type: TEXT
         -
+          uuid: 4708dfce20cb4053bc62dd4bae35fdde
           name: 'Meraki error count'
           type: DEPENDENT
           key: 'Meraki_error[count]'
@@ -381,6 +385,7 @@ zabbix_export:
           master_item:
             key: 'meraki.sh[errors.list]'
         -
+          uuid: 325d8a549c124fe09f02b354dfb83429
           name: 'Meraki error list'
           type: DEPENDENT
           key: 'Meraki_error[list]'
@@ -412,6 +417,7 @@ zabbix_export:
             key: 'meraki.sh[errors.list]'
       discovery_rules:
         -
+          uuid: 2c00ddc0f3e943b0944a84538286c66c
           name: 'Meraki Host Creation'
           type: EXTERNAL
           key: 'meraki.sh[network.discovery]'
@@ -419,6 +425,7 @@ zabbix_export:
           lifetime: 7d
           host_prototypes:
             -
+              uuid: 4bc4d43a500e4593ba471d2e0ed33f2f
               host: 'Meraki {#ORG} {#NETWORK_NAME}'
               name: 'Meraki {#ORG} {#NETWORK_NAME}'
               group_links:
@@ -443,6 +450,7 @@ zabbix_export:
                 - {  }
   triggers:
     -
+      uuid: 88f4cdaf54a44633a554ace41fe10dfb
       expression: 'last(/Meraki Network Discovery/Meraki_error[count])>0 or find(/Meraki Network Discovery/Meraki_error[list],,"like","never match")=1'
       name: 'Test Meraki Data Pull error.'
       priority: AVERAGE
