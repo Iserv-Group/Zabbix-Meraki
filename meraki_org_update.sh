@@ -1,12 +1,13 @@
 #!/bin/bash
 api_key=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx #Meraki Dashboard API Key
 output_folder="/usr/lib/zabbix/externalscripts/" #Should be the externalscripts folder of your Zabbix installation.
+input_folder="/home/user/scripts/" #should be the folder the script is located in
 #Grab basic Info for all Orginizations
 org_info=$(curl -L --request GET --url https://api.meraki.com/api/v0/organizations --header 'Content-Type: application/json' --header 'Accept: application/json' --header "X-Cisco-Meraki-API-Key: $api_key")
 #Creates full list of Org names
 echo $org_info | jq '.[] | .name' | sed 's/\"//g' > list.tmp
 #Filters out Orginizations that are purposfully ignored
-IFS=$'\n' orgs=(`comm  -23 <(sort list.tmp ) <(sort org_ignore.txt)`)
+IFS=$'\n' orgs=(`comm  -23 <(sort list.tmp ) <(sort $input_folder"org_ignore.txt")`)
 rm list.tmp
 #Increment through each org on the list
 for i in "${orgs[@]}"; do
@@ -46,6 +47,6 @@ array=$(cat json.tmp | jq -s)
 rm json.tmp
 jo -p errors_count=$error_count errors="$array" > $output_folder"meraki_errors.json" 
 #Output finished json list
-cat orgs.tmp | jq > "meraki_networks.json"
+cat orgs.tmp | jq > $input_folder"meraki_networks.json"
 rm orgs.tmp
 rm devcies.tmp
