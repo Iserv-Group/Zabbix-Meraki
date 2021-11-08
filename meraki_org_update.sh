@@ -9,6 +9,9 @@ echo $org_info | jq '.[] | .name' | sed 's/\"//g' > list.tmp
 #Filters out Orginizations that are purposfully ignored
 IFS=$'\n' orgs=(`comm  -23 <(sort list.tmp ) <(sort $input_folder"org_ignore.txt")`)
 rm list.tmp
+#Temporary fix to detect and kill errant processes from previous runs
+IFS=$'\n' pid=(`ps -aux | grep "/usr/bin/parallel -j 4" | head -n -1 | awk -F ' ' '{print $2}'`)
+for p in "${pid[@]}"; do kill -1 $p; done
 #Increment through each org on the list
 for i in "${orgs[@]}"; do
 	#Pulls Org ID from list	
