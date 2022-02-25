@@ -83,4 +83,15 @@ fi
 if [ "$1" == "network.uplink.data" ]; then
         cat $output_folder"meraki_quickpoll.json" | jq --arg id "$2" '.[] | select(.networkId == $id )' | jq -s .
 fi
+<<<<<<< Updated upstream
 
+=======
+#Pulls list of errors from errors list
+if [ "$1" == "errors.list" ]; then
+	cat $output_folder"meraki_errors.json"
+fi
+#Pulls size of json file for monitoring of potential issues
+if [ "$1" == "size.data" ]; then
+	wc -c $output_folder"meraki.json" | awk -F ' ' '{print $1}'
+fi
+>>>>>>> Stashed changes
