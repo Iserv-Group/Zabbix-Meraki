@@ -26,7 +26,7 @@
 	2. Deleting the discovered host and changing the name of the cloned host to the what the discovered host was, will prevent the discovery process from creating a new host, which will reduce the number of requests to the Meraki API. 
  8. After completing this final step, monitoring should be setup 
 # Known limitations
- Because the databases Zabbix uses have a character limit, there is a limit to how many devices can be in a single organization before problems start to arise. Due to how this version is written, and how much info the API dumps out, after more there are more than 90 devices in a single organization, discovery is likely to fail. I do have code written to reduce the information stored, per device, as well as break things out by network and item monitored, but I am not yet ready to port that code to this branch. 
+ Because the databases Zabbix uses have a character limit, there is a limit to how many devices can be in a single organization before problems start to arise. Due to how this version is written, and how much info the API dumps out, after there are more than 90 devices in a single organization, discovery is likely to fail. I do have code written to reduce the information stored, per device, as well as break things out by network and item monitored, but I am not yet ready to port that code to this branch. 
  
  Because I don't have large enough networks or organizations that require paging through the API, I can't guarantee whether this template will work in those scenarios. Feel free to make a pull request if you do have either of these and can work out a solution. 
 
