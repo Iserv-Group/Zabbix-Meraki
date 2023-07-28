@@ -274,6 +274,7 @@ zabbix_export:
           description: 'Zabbix API Key used to query API data for each organization. This helps keep monitoring from overloading the Merkaki API limit.'
         -
           macro: '{$ZBX.URL}'
+          value: 'http://localhost:8080/api_jsonrpc.php'
           description: 'Zabbix API URL used to query API data for each organization. This helps keep monitoring from overloading the Merkaki API limit.'
     -
       uuid: f51c70cb599b4dc582d4376721a3189a
