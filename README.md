@@ -1,10 +1,14 @@
 # Overview
  The purpose of this script is to monitor the status of Meraki devices in Zabbix. This is accomplished by making API calls against the Meraki Dashboard using the script function in Zabbix. Due to Meraki limiting the number of API queries that can be made from a single IP, some non-traditional template design choices were made to conform to Meraki’s preferred way of querying the API.
+ 
  This template is a modified version of the official Zabbix template for monitoring Meraki. Unlike previous versions of my own custom template for the same purpose, which used external checks relying on cron jobs on the host machine, it uses the new JavaScript based script item exclusively to gather data from Meraki. 
+ 
  The main upgrade over the official version is the ability to monitor a far larger number of devices before surpassing the Meraki API limit. This version accomplishes this by using Meraki’s preferred API call that gathers data for a whole organization, rather than a network or individual device like Zabbix’s official template. This data is then distributed to Zabbix Hosts that monitor whole networks by using Zabbix’s own API to retrieve data from the Organization level host. 
 ## Templated Zabbix items and triggers
  The Zabbix template is configured to create low priority alerts after a few minutes if a device or entire network becomes unreachable, then create increasingly higher priority alerts if the devices remain offline. The discovery process creates a single host within Zabbix for each Meraki network and adds it to a group based off its organization name in Meraki. 
+ 
  Alerts for discovered devices are dependent on an alert for the entire site. This is to reduce alerting to a single alarm if all the devices at a site go offline at the same time. 
+ 
  Lower level alerts from the official Zabbix template were kept including items for monitoring the configuration, license and checking for errors in the monitoring itself. 
 # Setup
  Setup is much simpler in this version of the template, though there are still a few hoops to jump through
@@ -23,5 +27,6 @@
  8. After completing this final step, monitoring should be setup 
 # Known limitations
  Because the databases Zabbix uses have a character limit, there is a limit to how many devices can be in a single organization before problems start to arise. Due to how this version is written, and how much info the API dumps out, after more there are more than 90 devices in a single organization, discovery is likely to fail. I do have code written to reduce the information stored, per device, as well as break things out by network and item monitored, but I am not yet ready to port that code to this branch. 
+ 
  Because I don't have large enough networks or organizations that require paging through the API, I can't guarantee whether this template will work in those scenarios. Feel free to make a pull request if you do have either of these and can work out a solution. 
 
