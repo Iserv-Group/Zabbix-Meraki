@@ -300,12 +300,11 @@ zabbix_export:
           name: 'device status data pull'
           type: SCRIPT
           key: device.status.data
-          delay: 5m
-          history: 1h
+          history: '0'
           trends: '0'
           value_type: TEXT
           params: |
-            var parameters = JSON.parse(value);
+            var params = JSON.parse(value);
             function zabbix_querry() {
                 try {
                     var req = new HttpRequest();
@@ -324,36 +323,45 @@ zabbix_export:
                     return error;
                 }
             }
-            zabbix_url = parameters.zabbix_url
-            //retrive item id for orginizational data
-            var zabbix_payload = {
-                "jsonrpc": "2.0",
-                "method": "item.get",
-                "params": {
-                    "itemids": parameters.pid
-                },
-                "auth": parameters.zabbix_key,
-                "id": 1
-            },
-            fields = JSON.stringify(zabbix_payload);
-            var item = JSON.parse(zabbix_querry());
-            item = JSON.parse(item[0].lastvalue)
-            return JSON.stringify(item)
-          preprocessing:
-            -
-              type: JSONPATH
-              parameters:
-                - '$.devices[?(@.networkId =~ "{$NETWORK_ID}")]'
+            zabbix_url = params.zabbix_url
+            
+            //Retrive device data from parent host
+            try {
+            	var item_key = 'devices.status[' + params.networkID + ']'
+            	var zabbix_payload = {
+            		"jsonrpc": "2.0",
+            		"method": "item.get",
+            		"params": {
+            			"host": params.parent_host,
+            			"search": {
+            				"key_": item_key
+            			},
+            		},
+            		"id": 1,
+            		"auth": params.zabbix_key
+            	},
+            	fields = JSON.stringify(zabbix_payload);
+            	var item = JSON.parse(zabbix_querry());
+                    item = item[0].lastvalue
+            	
+            } catch (error) {
+                zbx_login_error_msg = error;
+            };
+            
+            return item
           parameters:
-            -
-              name: pid
-              value: '{$DS_PID}'
             -
               name: zabbix_key
               value: '{$ZBX.READ.API.KEY}'
             -
               name: zabbix_url
               value: '{$ZBX.URL}'
+            -
+              name: parent_host
+              value: '{$PARENT_HOST}'
+            -
+              name: networkID
+              value: '{$NETWORK_ID}'
           tags:
             -
               tag: Application
@@ -370,7 +378,7 @@ zabbix_export:
             -
               type: JSONPATH
               parameters:
-                - '$.*.status'
+                - '$.*.b'
             -
               type: STR_REPLACE
               parameters:
@@ -469,11 +477,15 @@ zabbix_export:
             }
             zabbix_url = parameters.zabbix_url
             //retrive item id for orginizational data
+            var item_key = 'uplinks.lal[' + parameters.networkId + ']'
             var zabbix_payload = {
                 "jsonrpc": "2.0",
                 "method": "item.get",
                 "params": {
-                    "itemids": parameters.pid
+                    "host": parameters.parent_host,
+                    "search": {
+                            "key_": item_key
+                    },
                 },
                 "auth": parameters.zabbix_key,
                 "id": 1
@@ -486,17 +498,20 @@ zabbix_export:
             -
               type: JSONPATH
               parameters:
-                - '$.lossAndLatency[?(@.networkId =~ "{$NETWORK_ID}")]'
+                - '$.[?(@.networkId =~ "{$NETWORK_ID}")]'
           parameters:
-            -
-              name: pid
-              value: '{$DS_PID}'
             -
               name: zabbix_key
               value: '{$ZBX.READ.API.KEY}'
             -
               name: zabbix_url
               value: '{$ZBX.URL}'
+            -
+              name: parent_host
+              value: '{$PARENT_HOST}'
+            -
+              name: networkId
+              value: '{$NETWORK_ID}'
           tags:
             -
               tag: Application
@@ -511,7 +526,7 @@ zabbix_export:
           trends: '0'
           value_type: TEXT
           params: |
-            var parameters = JSON.parse(value);
+            var params = JSON.parse(value);
             function zabbix_querry() {
                 try {
                     var req = new HttpRequest();
@@ -530,36 +545,45 @@ zabbix_export:
                     return error;
                 }
             }
-            zabbix_url = parameters.zabbix_url
-            //retrive item id for orginizational data
-            var zabbix_payload = {
-                "jsonrpc": "2.0",
-                "method": "item.get",
-                "params": {
-                    "itemids": parameters.pid
-                },
-                "auth": parameters.zabbix_key,
-                "id": 1
-            },
-            fields = JSON.stringify(zabbix_payload);
-            var item = JSON.parse(zabbix_querry());
-            item = JSON.parse(item[0].lastvalue)
-            return JSON.stringify(item)
-          preprocessing:
-            -
-              type: JSONPATH
-              parameters:
-                - '$.uplinks[?(@.networkId =~ "{$NETWORK_ID}")]'
+            zabbix_url = params.zabbix_url
+            
+            //Retrive device data from parent host
+            try {
+            	var item_key = 'uplinks.status[' + params.networkId + ']'
+            	var zabbix_payload = {
+            		"jsonrpc": "2.0",
+            		"method": "item.get",
+            		"params": {
+            			"host": params.parent_host,
+            			"search": {
+            				"key_": item_key
+            			},
+            		},
+            		"id": 1,
+            		"auth": params.zabbix_key
+            	},
+            	fields = JSON.stringify(zabbix_payload);
+            	var item = JSON.parse(zabbix_querry());
+                    item = item[0].lastvalue
+            	
+            } catch (error) {
+                zbx_login_error_msg = error;
+            };
+            
+            return item
           parameters:
-            -
-              name: pid
-              value: '{$DS_PID}'
             -
               name: zabbix_key
               value: '{$ZBX.READ.API.KEY}'
             -
               name: zabbix_url
               value: '{$ZBX.URL}'
+            -
+              name: parent_host
+              value: '{$PARENT_HOST}'
+            -
+              name: networkId
+              value: '{$NETWORK_ID}'
           tags:
             -
               tag: Application
@@ -572,7 +596,7 @@ zabbix_export:
           key: devices.discover
           delay: 1h
           params: |
-            var parameters = JSON.parse(value);
+            var params = JSON.parse(value);
             function zabbix_querry() {
                 try {
                     var req = new HttpRequest();
@@ -587,25 +611,36 @@ zabbix_export:
                     
             
                 } catch (error) {
-                    Zabbix.Log(3, "Error message 'warning': " + error);
+                    Zabbix.Log(2, "Error message 'warning': " + error);
                     return error;
                 }
             }
-            zabbix_url = parameters.zabbix_url
-            //retrive item id for orginizational data
-            var zabbix_payload = {
-                "jsonrpc": "2.0",
-                "method": "item.get",
-                "params": {
-                    "itemids": parameters.pid
-                },
-                "auth": parameters.zabbix_key,
-                "id": 1
-            },
-            fields = JSON.stringify(zabbix_payload);
-            var item = JSON.parse(zabbix_querry());
+            zabbix_url = params.zabbix_url
+            
+            //Retrive device data from parent host
+            try {
+            	var item_key = 'devices.discovery[' + params.networkId + ']'
+            	var zabbix_payload = {
+            		"jsonrpc": "2.0",
+            		"method": "item.get",
+            		"params": {
+            			"host": params.parent_host,
+            			"search": {
+            				"key_": item_key
+            			},
+            		},
+            		"id": 1,
+            		"auth": params.zabbix_key
+            	},
+            	fields = JSON.stringify(zabbix_payload);
+            	var item = JSON.parse(zabbix_querry());
+            	
+            } catch (error) {
+                zbx_login_error_msg = error;
+                return error
+            };
             item = JSON.parse(item[0].lastvalue)
-            return JSON.stringify(item.devices)
+            return JSON.stringify(item)
           filter:
             evaltype: AND
             conditions:
@@ -635,7 +670,12 @@ zabbix_export:
                 -
                   type: JSONPATH
                   parameters:
-                    - '$[?(@.serial == ''{#SERIAL}'')].status'
+                    - '$[?(@.a == ''{#SERIAL}'')].b'
+                -
+                  type: STR_REPLACE
+                  parameters:
+                    - '["dormant"]'
+                    - '3'
                 -
                   type: STR_REPLACE
                   parameters:
@@ -729,35 +769,79 @@ zabbix_export:
                       value: '{#NAME}'
           parameters:
             -
-              name: pid
-              value: '{$DD_PID}'
-            -
               name: zabbix_key
               value: '{$ZBX.READ.API.KEY}'
             -
               name: zabbix_url
               value: '{$ZBX.URL}'
+            -
+              name: parent_host
+              value: '{$PARENT_HOST}'
+            -
+              name: networkId
+              value: '{$NETWORK_ID}'
           lld_macro_paths:
             -
               lld_macro: '{#NAME}'
-              path: $.name
+              path: $.a
             -
               lld_macro: '{#NOTES}'
-              path: $.notes
+              path: $.e
             -
               lld_macro: '{#SERIAL}'
-              path: $.serial
-          preprocessing:
-            -
-              type: JSONPATH
-              parameters:
-                - '$.[?(@.networkId =~ "{$NETWORK_ID}")]'
+              path: $.b
         -
           uuid: 40f9ac1150574a8d83b4def2e0f129ee
           name: 'Discovered WAN Connections'
-          type: DEPENDENT
+          type: SCRIPT
           key: uplinks.discover
-          delay: '0'
+          delay: 1h
+          params: |
+            var params = JSON.parse(value);
+            function zabbix_querry() {
+                try {
+                    var req = new HttpRequest();
+                    
+                    res = req.post(zabbix_url,fields);
+            
+                    if (req.getStatus() != 200) { 
+                        //throw 'Response code: ' + req.getStatus(); 
+                    }
+                    var data = JSON.parse(res);
+                    return (JSON.stringify(data.result));
+                    
+            
+                } catch (error) {
+                    Zabbix.Log(3, "Error message 'warning': " + error);
+                    return error;
+                }
+            }
+            zabbix_url = params.zabbix_url
+            
+            //Retrive device data from parent host
+            try {
+            	var item_key = 'uplinks.status[' + params.networkID + ']'
+            	var zabbix_payload = {
+            		"jsonrpc": "2.0",
+            		"method": "item.get",
+            		"params": {
+            			"host": params.parent_host,
+            			"search": {
+            				"key_": item_key
+            			},
+            		},
+            		"id": 1,
+            		"auth": params.zabbix_key
+            	},
+            	fields = JSON.stringify(zabbix_payload);
+            	var item = JSON.parse(zabbix_querry());
+                    item = item[0].lastvalue        
+            
+            } catch (error) {
+                zbx_login_error_msg = error;
+            };
+            
+            return item
           lifetime: 7d
           item_prototypes:
             -
@@ -933,8 +1017,19 @@ zabbix_export:
                     -
                       tag: '{#NAME}'
                       value: '{#INT_NAME}'
-          master_item:
-            key: uplink.status.data
+          parameters:
+            -
+              name: parent_host
+              value: '{$PARENT_HOST}'
+            -
+              name: zabbix_key
+              value: '{$ZBX.READ.API.KEY}'
+            -
+              name: networkID
+              value: '{$NETWORK_ID}'
+            -
+              name: zabbix_url
+              value: '{$ZBX.URL}'
           lld_macro_paths:
             -
               lld_macro: '{#NAME}'
@@ -955,17 +1050,24 @@ zabbix_export:
                   var uplinks = [];
                   for (i in value) {
                   	for (u in value[i].uplinks) {
+                  		var link = {};
                   		if (value[i].uplinks[u].ip) {
-                  			uplink = {};
-                  			uplink.name = value[i].uplinks[u].interface;
-                  			uplink.title = value[i].trigger_title;
-                  			uplink.serial = value[i].serial;
-                  			uplinks.push(uplink)
+                  			link.name = value[i].uplinks[u].interface;
+                  			link.serial = value[i].serial
+                  			link.title = value[i].trigger_title
+                  			uplinks[a] = link
                   			a++;
                   		}
                   	}
                   }
                   return JSON.stringify(uplinks)
+      tags:
+        -
+          tag: class
+          value: network
+        -
+          tag: target
+          value: cisco-meraki-dashboard
       valuemaps:
         -
           uuid: edd7522dd76e4a4ab949241f4b7b23d6
@@ -980,6 +1082,19 @@ zabbix_export:
             -
               value: '2'
               newvalue: Online
+        -
+          uuid: 62e15679458343ab9d0f2d55359b40d9
+          name: 'Meraki Uplink Status'
+          mappings:
+            -
+              value: '3'
+              newvalue: active
+            -
+              value: '2'
+              newvalue: ready
+            -
+              value: '1'
+              newvalue: failed
     -
       uuid: c1bc3f6203fd4876b797d5d59dd35746
       template: 'Meraki organization by HTTP'
@@ -1278,31 +1393,10 @@ zabbix_export:
               tag: component
               value: raw
         -
-          uuid: 698cac4ab25b4ebfb537c7515c5030e3
-          name: 'Meraki: Get licenses info'
-          type: HTTP_AGENT
-          key: meraki.get.licenses
-          delay: 12h
-          history: '0'
-          trends: '0'
-          value_type: TEXT
-          description: 'Return an overview of the license state for an organization.'
-          timeout: 30s
-          url: 'https://{$MERAKI.API.URL}/organizations/{$ID}/licenses/overview'
-          http_proxy: '{$MERAKI.HTTP_PROXY}'
-          headers:
-            -
-              name: X-Cisco-Meraki-API-Key
-              value: '{$MERAKI.TOKEN}'
-          tags:
-            -
-              tag: component
-              value: raw
-        -
-          uuid: 995b916e3a0046679cb9cc318026612c
-          name: 'Meraki: Get list of the networks'
+          uuid: 0e573908f53748c09b2fa719d21a61de
+          name: 'Meraki: Get discovery list'
           type: SCRIPT
-          key: meraki.get.networks
+          key: meraki.get.discovery.list
           delay: 1h
           history: '0'
           trends: '0'
@@ -1311,14 +1405,24 @@ zabbix_export:
             var params = JSON.parse(value);
             var parameters = JSON.parse(value);
             var request = new HttpRequest();
-            
+            var zbx_data_error_msg = '';
+            var zbx_login_error_msg = '';
+            var network_error_msg = '';
+            var device_error_msg = '';
+            var uplinks_error_msg = '';
             request.addHeader('X-Cisco-Meraki-API-Key:' + params.token);
             
             var response,
                 error_msg = '',
                 vpnStats = [],
                 result = [];
-            
+            function uniqBy(a, key) {
+                var seen = {};
+                return a.filter(function(item) {
+                    var k = key(item.site_name);
+                    return seen.hasOwnProperty(k) ? false : (seen[k] = true);
+                })
+            }
             function getHttpData(url) {
                 response = request.get(url);
                 Zabbix.log(4, '[ Meraki API ] [ ' + url + ' ] Received response with status code ' + request.getStatus() + ': ' + response);
@@ -1347,58 +1451,7 @@ zabbix_export:
                 return response;
             };
             
-            function zabbix_querry() {
-                try {
-                    var req = new HttpRequest();
-                    
-                    res = req.post(zabbix_url,fields);
-            
-                    if (req.getStatus() != 200) { 
-                        //throw 'Response code: ' + req.getStatus(); 
-                    }
-                    var data = JSON.parse(res);
-                    return (JSON.stringify(data.result));
-                    
-            
-                } catch (error) {
-                    Zabbix.Log(3, "Error message 'warning': " + error);
-                    return error;
-                }
-            }
-            zabbix_url = parameters.zabbix_url
-            //retrive item id for orginizational data
-            var zabbix_payload = {
-                "jsonrpc": "2.0",
-                "method": "item.get",
-                "params": {
-            		"host": parameters.current_host,
-            		"search": {
-                        "key_": "meraki.get.device.status"
-                    },
-                },
-                "id": 1,
-                "auth": parameters.zabbix_key
-            },
-            fields = JSON.stringify(zabbix_payload);
-            var item = JSON.parse(zabbix_querry());
-            var ds_pid = item[0].itemid
-            zabbix_url = parameters.zabbix_url
-            //retrive item id for orginizational data
-            var zabbix_payload = {
-                "jsonrpc": "2.0",
-                "method": "item.get",
-                "params": {
-            		"host": parameters.current_host,
-            		"search": {
-                        "key_": "meraki.get.device.details"
-                    },
-                },
-                "id": 1,
-                "auth": parameters.zabbix_key
-            },
-            fields = JSON.stringify(zabbix_payload);
-            var item = JSON.parse(zabbix_querry());
-            var dd_pid = item[0].itemid
+            //Retreive networks
             try {
             
                 if (params.token === '{' + '$MERAKI.TOKEN}') {
@@ -1418,51 +1471,134 @@ zabbix_export:
                 }
             
                 networks = getHttpData(params.url + 'organizations/' + encodeURIComponent(params.organizationId) + '/networks');
-                for (i in networks) {
-                    networks[i].dd_pid = dd_pid
-                    networks[i].ds_pid = ds_pid
-                    networks[i].org = params.org
+            	var sites = [];
+            	//build list of sites
+            	for (i in networks) {
+            		var site = {};
+            		site.site_name = networks[i].name;
+                    site.parent_host = params.current_host
+                    site.org = params.org
+            		site.networkID = networks[i].id
+            		sites[i] = site
                 }
-            
             } catch (error) {
-                error_msg = error;
+                network_error_msg = error;
             };
             
+            //Retrive devices
+            try {
             
+                if (params.token === '{' + '$MERAKI.TOKEN}') {
+                    throw 'Please change {' + '$MERAKI.TOKEN} macro with the proper value.';
+                }
+            
+                if (params.url.indexOf('http://') === -1 && params.url.indexOf('https://') === -1) {
+                    params.url = 'https://' + params.url;
+                }
+            
+                if (!params.url.endsWith('/')) {
+                    params.url += '/';
+                }
+            
+                if (typeof params.httpproxy !==  'undefined' && params.httpproxy !== '') {
+                    request.setProxy(params.httpproxy);
+                }
+            
+                devices = getHttpData(params.url + 'organizations/' + encodeURIComponent(params.organizationId) + '/devices');
+            
+            } catch (error) {
+                device_error_msg = error;
+            };
+            
+            //Retrieve Uplinks
+            try {
+            
+                if (params.token === '{' + '$MERAKI.TOKEN}') {
+                    throw 'Please change {' + '$MERAKI.TOKEN} macro with the proper value.';
+                }
+            
+                if (params.url.indexOf('http://') === -1 && params.url.indexOf('https://') === -1) {
+                    params.url = 'https://' + params.url;
+                }
+            
+                if (!params.url.endsWith('/')) {
+                    params.url += '/';
+                }
+            
+                if (typeof params.httpproxy !==  'undefined' && params.httpproxy !== '') {
+                    request.setProxy(params.httpproxy);
+                }
+            
+                uplinks = getHttpData(params.url + 'organizations/' + encodeURIComponent(params.organizationId) + '/appliance/uplink/statuses');
+            	for (i in uplinks) {
+            		if (uplinks[i].highAvailability.enabled === false) {
+            			uplinks[i].trigger_title = "only"
+            		}
+            		if (uplinks[i].highAvailability.enabled === true) {
+            			if (uplinks[i].highAvailability.role == "primary" ) {
+            				uplinks[i].trigger_title = "primary"
+            			}
+            			if (uplinks[i].highAvailability.role == "spare" ) {
+            				uplinks[i].trigger_title = "spare"
+            			}
+            		}
+            	}
+            } catch (error) {
+                uplinks_error_msg = error;
+            };
+            
+            var errors = {'zbx_data_error_msg': zbx_data_error_msg, 'zbx_login_error_msg': zbx_login_error_msg, 'network_error_msg': network_error_msg, 'device_error_msg': device_error_msg, 'uplinks_error_msg': uplinks_error_msg};
             return JSON.stringify({
-                'networks': networks,
-                'error': error_msg.toString()
+            	'sites': sites,
+            	'devices': devices,
+            	'uplinks_list': uplinks,
+                'error': errors
             });
-          description: 'Item for gathering all the networks of organization from Meraki API.'
-          timeout: 30s
+          description: 'Item for gathering all items used for discovery of networks, and devices on discovered network hosts.'
+          timeout: 60s
           parameters:
+            -
+              name: current_host
+              value: '{HOST.HOST}'
+            -
+              name: httpproxy
+              value: '{$MERAKI.HTTP_PROXY}'
+            -
+              name: org
+              value: '{$ORG}'
+            -
+              name: organizationId
+              value: '{$ID}'
+            -
+              name: parent_host
+              value: '{HOST.HOST}'
             -
               name: token
               value: '{$MERAKI.TOKEN}'
             -
               name: url
               value: '{$MERAKI.API.URL}'
+          tags:
             -
-              name: organizationId
-              value: '{$ID}'
+              tag: component
+              value: raw
+        -
+          uuid: 698cac4ab25b4ebfb537c7515c5030e3
+          name: 'Meraki: Get licenses info'
+          type: HTTP_AGENT
+          key: meraki.get.licenses
+          delay: 12h
+          history: '0'
+          trends: '0'
+          value_type: TEXT
+          description: 'Return an overview of the license state for an organization.'
+          timeout: 30s
+          url: 'https://{$MERAKI.API.URL}/organizations/{$ID}/licenses/overview'
+          http_proxy: '{$MERAKI.HTTP_PROXY}'
+          headers:
             -
-              name: httpproxy
-              value: '{$MERAKI.HTTP_PROXY}'
-            -
-              name: parent_host
-              value: '{HOST.HOST}'
-            -
-              name: zabbix_url
-              value: '{$ZBX.URL}'
-            -
-              name: zabbix_key
-              value: '{$ZBX.READ.API.KEY}'
-            -
-              name: current_host
-              value: '{HOST.HOST}'
-            -
-              name: org
-              value: '{$ORG}'
+              name: X-Cisco-Meraki-API-Key
+              value: '{$MERAKI.TOKEN}'
           tags:
             -
               tag: component
@@ -1487,7 +1623,7 @@ zabbix_export:
               parameters:
                 - 1h
           master_item:
-            key: meraki.get.networks
+            key: meraki.get.discovery.list
           tags:
             -
               tag: component
@@ -2234,30 +2370,176 @@ zabbix_export:
             evaltype: AND
             conditions:
               -
-                macro: '{#NETWORK_NAME}'
+                macro: '{#SITE_NAME}'
                 value: '^.*(?i)(IGNORE).*$'
                 operator: NOT_MATCHES_REGEX
                 formulaid: A
               -
-                macro: '{#NETWORK_NAME}'
+                macro: '{#SITE_NAME}'
                 value: '^.*(?i)(PENDING).*$'
                 operator: NOT_MATCHES_REGEX
                 formulaid: B
               -
-                macro: '{#NETWORK_NAME}'
+                macro: '{#SITE_NAME}'
                 value: ^$
                 operator: NOT_MATCHES_REGEX
                 formulaid: C
               -
-                macro: '{#NETWORK_NAME}'
+                macro: '{#SITE_NAME}'
                 value: '^.*(?i)(Systems Manager - MDM).*$'
                 operator: NOT_MATCHES_REGEX
                 formulaid: D
+          item_prototypes:
+            -
+              uuid: c698b8bc3f4c442283bf70f1d550ddac
+              name: '{#SITE_NAME} Device Discovery list'
+              type: DEPENDENT
+              key: 'devices.discovery[{#NETWORK_ID}]'
+              delay: '0'
+              history: 1h
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.devices[?(@.networkId == ''{#NETWORK_ID}'')]'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      var list = [];
+                      value = JSON.parse(value)
+                      for (d in value) {
+                      	var device = {};
+                      	device.a = value[d].name;
+                              device.b = value[d].serial;
+                              device.e = value[d].notes
+                      	list[d] = device;
+                      }
+                      return JSON.stringify(list);
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '1800'
+              master_item:
+                key: meraki.get.device.details
+              tags:
+                -
+                  tag: discovery
+                  value: Uplinks
+                -
+                  tag: '{#SITE_NAME}'
+            -
+              uuid: a7c465944ae34f36a9094e577a1a72d4
+              name: '{#SITE_NAME} Device status list'
+              type: DEPENDENT
+              key: 'devices.status[{#NETWORK_ID}]'
+              delay: '0'
+              history: 1h
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.devices
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.networkId == ''{#NETWORK_ID}'')]'
+                -
+                  type: JAVASCRIPT
+                  parameters:
+                    - |
+                      var list = [];
+                      value = JSON.parse(value)
+                      for (d in value) {
+                      	var device = {};
+                      	device.a = value[d].serial;
+                      	device.b = value[d].status;
+                              device.c = value[d].name;
+                              device.e = value[d].notes
+                      	list[d] = device;
+                      }
+                      return JSON.stringify(list);
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '1800'
+              master_item:
+                key: meraki.get.device.status
+              tags:
+                -
+                  tag: Status
+                  value: Uplinks
+                -
+                  tag: '{#SITE_NAME}'
+            -
+              uuid: ae4827bb26614725b6e4853f88f293ee
+              name: '{#SITE_NAME} uplinks Loss and Latency'
+              type: DEPENDENT
+              key: 'uplinks.lal[{#NETWORK_ID}]'
+              delay: '0'
+              history: 1h
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.lossAndLatency
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.networkId == ''{#NETWORK_ID}'')]'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '1800'
+              master_item:
+                key: meraki.get.device.status
+              tags:
+                -
+                  tag: Status
+                  value: Uplinks
+                -
+                  tag: '{#SITE_NAME}'
+            -
+              uuid: b902cdeaaf904352b69059ebcc1ce497
+              name: '{#SITE_NAME} uplinks status list'
+              type: DEPENDENT
+              key: 'uplinks.status[{#NETWORK_ID}]'
+              delay: '0'
+              history: 1h
+              trends: '0'
+              value_type: TEXT
+              preprocessing:
+                -
+                  type: JSONPATH
+                  parameters:
+                    - $.uplinks
+                -
+                  type: JSONPATH
+                  parameters:
+                    - '$.[?(@.networkId == ''{#NETWORK_ID}'')]'
+                -
+                  type: DISCARD_UNCHANGED_HEARTBEAT
+                  parameters:
+                    - '1800'
+              master_item:
+                key: meraki.get.device.status
+              tags:
+                -
+                  tag: Status
+                  value: Uplinks
+                -
+                  tag: '{#SITE_NAME}'
           host_prototypes:
             -
               uuid: e2784c5e6e5a4b4bbe0aa69174cdbce0
               host: 'Meraki {#NETWORK_ID}'
-              name: 'Meraki {#ORG} {#NETWORK_NAME}'
+              name: 'Meraki {#ORG} {#SITE_NAME}'
               group_links:
                 -
                   group:
@@ -2273,42 +2555,39 @@ zabbix_export:
                   name: 'Meraki network by HTTP'
               macros:
                 -
-                  macro: '{$DD_PID}'
-                  value: '{#DD_PID}'
-                -
-                  macro: '{$DS_PID}'
-                  value: '{#DS_PID}'
-                -
                   macro: '{$NETWORK_ID}'
                   value: '{#NETWORK_ID}'
+                -
+                  macro: '{$PARENT_HOST}'
+                  value: '{#PARENT_HOST}'
+                -
+                  macro: '{$SITE_NAME}'
+                  value: '{#SITE_NAME}'
               custom_interfaces: 'YES'
               interfaces:
                 -
                   type: JMX
                   port: '12345'
           master_item:
-            key: meraki.get.networks
+            key: meraki.get.discovery.list
           lld_macro_paths:
             -
-              lld_macro: '{#DD_PID}'
-              path: $.dd_pid
-            -
-              lld_macro: '{#DS_PID}'
-              path: $.ds_pid
-            -
               lld_macro: '{#NETWORK_ID}'
-              path: $.id
-            -
-              lld_macro: '{#NETWORK_NAME}'
-              path: $.name
+              path: $.networkID
             -
               lld_macro: '{#ORG}'
               path: $.org
+            -
+              lld_macro: '{#PARENT_HOST}'
+              path: $.parent_host
+            -
+              lld_macro: '{#SITE_NAME}'
+              path: $.site_name
           preprocessing:
             -
               type: JSONPATH
               parameters:
-                - $.networks
+                - $.sites
             -
               type: JAVASCRIPT
               parameters:
@@ -2318,7 +2597,7 @@ zabbix_export:
                   var regex = /[!@#\$%\^&\*\':]/;
                   for (var i=0; i < sites.length;i++)
                   {
-                     sites[i].name = sites[i].name.replace(regex, '')
+                     sites[i].name = sites[i].site_name.replace(regex, '')
                   }
                   return JSON.stringify(sites)
       tags:
